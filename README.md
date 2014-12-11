@@ -51,9 +51,36 @@ In other cases like a gamepedia wiki it will resort to using the wikimedia API.
 }
 ```
 
+### Extra features
+
+#### Categories
+
+Wikimedia categories found in the ```[[Category:Cool]]``` format will get added to the documents indexed into the category field.
+
+#### Template fields
+
+Many Wikisites use templates for various informations such as infoboxes for example. This feature is barely developped but the code will attempt to extract information 
+
+```
+{Character|
+name=Dude,
+gender=male,
+attributes=*Smart *Cool
+}
+```
+will get added to documents as
+
+```json
+
+"Character_name":"[John"],
+"Character_gender":["male"],
+"Character_attributes":["Smart","Cool"]
+
+```
 
 ### Future improvements
 
 * Deal with index creation when the index does not exist.
 * Deal with dump files to not redownload. Currently ``` python WikiExtractor.py --input dump.xml.gz --output extracted``` will generate lines of json for every documents
 * Deal with cleanup of generated files
+* allow inclusion-only , or exclusion of template names
