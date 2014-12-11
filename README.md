@@ -14,7 +14,7 @@ Currently most MediaWiki wikis are supported. Find a list of wikis on [Wikiapiar
 
 Just run a pip install to install the dependecies ( currently only one )
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
@@ -24,7 +24,7 @@ Create an index on IDOL Ondemand.com either using the [Create Text Index API](ht
 
 Create a json file ```starwars.json``` 
 
-```
+```json
 {
 "idolkey":"yourapikeyhere",
 "idolindex":"starwarsindex",
@@ -34,7 +34,7 @@ Create a json file ```starwars.json```
 
 And then run the script 
 
-```
+```bash
 python WikiExtractor.py --config starwars.json
 ```
 
@@ -43,7 +43,7 @@ In many cases, when dealing with a Wikia page , the script will attempt to downl
 
 In other cases like a gamepedia wiki it will resort to using the wikimedia API. 
 
-```
+```json
 {
 "idolkey":"youapikey",
 "idolindex":"awesomenautsgamepedia",
