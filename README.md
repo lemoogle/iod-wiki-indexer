@@ -9,6 +9,9 @@ IDOL OnDemand offers many functionalities including text indexing and analytics 
 
 Currently most MediaWiki wikis are supported. Find a list of wikis on [Wikiapiary](https://wikiapiary.com/wiki/Websites)
 
+The core of the Wikitext extraction was modified from script by Giuseppe Attardi.
+http://medialab.di.unipi.it/wiki/Wikipedia_Extractor
+
 ###Install
 
 
@@ -52,6 +55,22 @@ In other cases like a gamepedia wiki it will resort to using the wikimedia API.
 ```
 
 ### Extra features
+
+#### Field modification rules
+
+Sometimes the data and the fields you get from wikipedia isn't exactly how you want it. For example the lyrics.wikia.com wiki has document titles in the format of "Artist:Song Title". We can set some regex rules in our json config to Move the Artist part out to a new "artist" field and also only keep the title of the song for the "title" field.
+
+```json
+{
+"idolkey":"apikey",
+"idolindex":"lyrics",
+"mediawikiurl":"http://lyrics.wikia.com/",
+"rules":[
+  {"source":"title","pattern":"(.*?)\\:.*","output":"\\1","destination":"artist"},
+  {"source":"title","pattern":".*?\\:(.*?)","output":"\\1","destination":"title"}
+]
+}
+```
 
 #### Categories
 

@@ -1,58 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# =============================================================================
-#  Version: 2.6 (Oct 14, 2013)
-#  Author: Giuseppe Attardi (attardi@di.unipi.it), University of Pisa
-#		Antonio Fuschetto (fuschett@di.unipi.it), University of Pisa
-#
-#  Contributors:
-#	Leonardo Souza (lsouza@amtera.com.br)
-#	Juan Manuel Caicedo (juan@cavorite.com)
-#	Humberto Pereira (begini@gmail.com)
-#	Siegfried-A. Gevatter (siegfried@gevatter.com)
-#	Pedro Assis (pedroh2306@gmail.com)
-#
-# =============================================================================
-#  Copyright (c) 2009. Giuseppe Attardi (attardi@di.unipi.it).
-# =============================================================================
-#  This file is part of Tanl.
-#
-#  Tanl is free software; you can redistribute it and/or modify it
-#  under the terms of the GNU General Public License, version 3,
-#  as published by the Free Software Foundation.
-#
-#  Tanl is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# =============================================================================
 
-"""Wikipedia Extractor:
-Extracts and cleans text from Wikipedia database dump and stores output in a
-number of files of similar size in a given directory.
-Each file contains several documents in Tanl document format:
-	<doc id="" url="" title="">
-		...
-		</doc>
-
-Usage:
-  WikiExtractor.py [options]
-
-Options:
-  -c, --compress		: compress output files using bzip
-  -b, --bytes= n[KM]	: put specified bytes per output file (default 500K)
-  -B, --base= URL		: base URL for the Wikipedia pages
-  -l, --link			: preserve links
-  -n NS, --ns NS		: accepted namespaces (separated by commas)
-  -o, --output= dir	 : place output files in specified directory (default
-						current)
-  -s, --sections	: preserve sections
-  -h, --help			: display this help and exit
-"""
 
 import sys
 import gzip
@@ -120,14 +68,14 @@ version = '2.5'
 
 ##### Main function ###########################################################
 
-def WikiDocument(out, id, title, text):
+def WikiDocument(out, id, title, text,config):
 	#print text
 	#print "hello"
 	url = get_url(id, prefix)
-	header = '<doc id="%s" url="%s" title="%s">\n' % (id, url, title)
+	#header = '<doc id="%s" url="%s" title="%s">\n' % (id, url, title)
 	# Separate header from text with a newline.
-	header += title + '\n'
-	header = header.encode('utf-8')
+	#header += title + '\n'
+	#header = header.encode('utf-8')
 	text,categories = dropNested(text, r'\[\[Category\:', r'\]\]')
 	text,matches = dropNested(text, r'{{', r'}}')
 	obj=processmatches(matches)
@@ -138,7 +86,18 @@ def WikiDocument(out, id, title, text):
 	#print obj
 	text = clean(text)
 	obj["content"]=text
-	footer = "\n</doc>"
+	#print config
+	if config:
+		newobj={}
+		for rule in config.get('rules',[]):
+			if rule["source"] in obj:
+				try:
+					ruleout=re.sub(rule["pattern"],rule["output"],obj[rule["source"]])
+					obj[rule["destination"]]=ruleout
+				except:
+					print "there was a problem applying your rule"
+		obj.update(newobj)
+	#footer = "\n</doc>"
 	#print obj
 	jsonstr=json.dumps(obj)
 	out.reserve(len(jsonstr))
@@ -556,6 +515,7 @@ def clean(text):
 			text = text.replace(match.group(), '%s_%d' % (placeholder, index))
 			index += 1
 
+
 	text = text.replace('<<', u'Â«').replace('>>', u'Â»')
 
 	#############################################
@@ -711,7 +671,7 @@ class OutputSplitter:
 
 tagRE = re.compile(r'(.*?)<(/?\w+)[^>]*>(?:([^<]*)(<.*?>)?)?')
 
-def process_data(input, output):
+def process_data(input, output,config):
 	global prefix
 
 	page = []
@@ -753,7 +713,7 @@ def process_data(input, output):
 					not redirect:
 				print id, title.encode('utf-8')
 				sys.stdout.flush()
-				WikiDocument(output, id, title, ''.join(page))
+				WikiDocument(output, id, title, ''.join(page),config)
 				#sys.exit()
 			id = None
 			page = []
@@ -787,8 +747,8 @@ def download_file(url):
 				f.flush()
 	return local_filename
 
-def process_api(url,output):
-
+def process_api(url,output,config):
+	print "api",config
 	mediawikiurl=url
 	mediawikiurl = urlparse( mediawikiurl )
 	mediawikiurl = '{uri.scheme}://{uri.netloc}/'.format(uri=mediawikiurl)
@@ -803,7 +763,6 @@ def process_api(url,output):
 	file_size = 500 * 1024
 	output_dir = '.'
 
-	config=None
 	while gapcontinue:
 		page=requests.get(pageurl).json()
 		gapcontinue=False
@@ -824,7 +783,7 @@ def process_api(url,output):
 				text=res["revisions"][0]["*"]
 			except:
 				text=""
-			WikiDocument(output, id, title,text)
+			WikiDocument(output, id, title,text,config)
 
 
 statsurl="%s/Special:Statistics"
@@ -930,10 +889,11 @@ def main():
 		else:
 			print "dump was not found"
 			processdatabool=False
+	print "hello",config
 	if processdatabool:
-		process_data(inputfile, output_splitter)
+		process_data(inputfile, output_splitter,config)
 	else:
-		process_api(mediawikiurl,output_splitter)
+		process_api(mediawikiurl,output_splitter,config)
 	output_splitter.close()
 
 
