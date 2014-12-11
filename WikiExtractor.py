@@ -139,6 +139,7 @@ def WikiDocument(out, id, title, text):
 	text = clean(text)
 	obj["content"]=text
 	footer = "\n</doc>"
+	#print obj
 	jsonstr=json.dumps(obj)
 	out.reserve(len(jsonstr))
 	#out.reserve(len(header) + len(text) + len(footer))
@@ -344,9 +345,10 @@ def dropNested(text, openDelim, closeDelim):
 	return res,returnmatches
 
 def cleanvals(val):
+	#print val
 	val=map(lambda x: re.sub(r'\[\[(.*?)\]\]',r'\1',x),val)
 	val=map(lambda x: re.sub(r'\[(.*?)\]',r'\1',x),val)
-	val=[ " ".join(x.split("&&")[1:]) if "&&" in x else x for x in val]
+	val=[ " ".join(x.split("&&")[1:]).strip() if "&&" in x else x.strip() for x in val]
 	val=filter(lambda x: x,val)
 	return val
 
@@ -365,6 +367,7 @@ def processmatches(matches):
 		splits=match.split("|")
 		tag=splits[0]
 		tag=tag.replace('\n','')
+		tag=tag.strip()
 		#tags.append(tag)
 		if len(splits)>1:
 			attrs=splits[1:]
@@ -374,6 +377,7 @@ def processmatches(matches):
 					key,val=attr.split('=',1)
 					val=val.replace('\n','')
 					key=key.replace("\n","")
+					key=key.strip()
 					val=val.split("*")
 					val=cleanvals(val)
 					#print val
@@ -791,7 +795,7 @@ def process_api(url,output):
 	if "shoutwiki" in mediawikiurl:
 		mediawikiurl=mediawikiurl+"w/"
 
-	url="%s/api.php?action=query&generator=allpages&gaplimit=100&gapfilterredir=nonredirects&prop=revisions&%s&rvprop=content&format=json"
+	url="%s/api.php?action=query&generator=allpages&gaplimit=1000&gapfilterredir=nonredirects&prop=revisions&%s&rvprop=content&format=json"
 	pageurl=url % (mediawikiurl,"nothing=")
 	print pageurl
 	gapcontinue=True
